@@ -35,7 +35,7 @@ na_records
 # Same count as when values were -1
 nrow(na_records)
 
-
+install.packages("mice")
 library(mice)
 # 15 records have missing NI address
 # 10 have missing type
@@ -209,7 +209,7 @@ opar <- par(no.readonly = TRUE)
 # mfrow = c(nrows, ncols) to create a matrix of 
 # nrows × ncols plots that are filled in by row
 # Here we have 1 row by 2 cols to display our charts
-par(mfrow = c(1, 2))
+par(mfrow = c(1, 3))
 
 hist(file_data$NoQuals, main = "Histogram for NoQuals", xlab = "")
 hist(file_data$L4Quals_plus, main = "Histogram for L4 qualifications +", xlab = "")
@@ -226,3 +226,78 @@ par(mfrow = c(1, 2))
 
 plot(x = file_data$NoQuals, y = file_data$AdultMeanAge, ylab = "Adult Mean age", xlab = "No qualifications")
 plot(x = file_data$L4Quals_plus, y = file_data$AdultMeanAge, ylab = "Adult mean age", xlab = "L4 qualifications+")
+
+
+# Examine data in more details
+variables_of_interest <- c("AdultMeanAge", 
+                           "Owned", 
+                           "NoQuals", 
+                           "White", 
+                           "L4Quals_plus", 
+                           "Unemp", 
+                           "HigherOccup", 
+                           "Deprived", 
+                           "Proportion")
+
+pairs(file_data[variables_of_interest])
+
+# examining data in more detail
+# This chart shows "NoQuals" on x-axis and "AdultMeanAge" on the y-axis
+# and proportion is assigned a colour
+plot <- ggplot(file_data, aes(x = L4Quals_plus, y = HigherOccup, color = Proportion))
+plot <- plot + stat_smooth(method = "lm", col = "darkgrey", se = FALSE)
+plot <- plot + geom_point()
+print(plot)
+
+# Interactions with correlations
+# using the corrplot() function
+# Create a mtrix of high correlations
+opar <- par(no.readonly = TRUE)
+library(corrplot)
+# tl.col = text colour
+# tl.cex = text size
+corrplot(corr = cor(numerical_data), tl.col = "Black", tl.cex = 0.9)
+
+# What we've learnt so far is that age, education, and ethnicity are
+# important factors in understanding the way people voted in the Brexit Referendum.
+# Younger people with higher education levels are related with votes in favour of remaining in
+# the EU. Older white people are related with votes in favour of leaving the EU. 
+# We can now use this knowledge to make a more succinct dataset that incorporates this information.
+# First we add relevant variables, and then we remove non-relevant variables.
+
+# Next step - split up the data into meaningful variables
+# 2 groups of age - below and above age 45
+# 2 groups of ethnicity - white and non-white
+# 2 groups of education (higher and lower level of education)
+
+# Age below 45
+attach(file_data)
+file_data$Age_18to44 <- (Age_18to19 + 
+                           Age_20to24 + 
+                           Age_25to29 + 
+                           Age_30to44)
+
+# Age above 45
+file_data$Age_45_above <- (Age_45to59 + 
+                             Age_60to64 + 
+                             Age_65to74 + 
+                             Age_75to84 + 
+                             Age_85to89 + 
+                             Age_90plus)
+
+
+# Data already exists for whites voters
+# Creating non-white variable
+file_data$non_white <- (Black + 
+                          Asian + 
+                          Indian + 
+                          Pakistani)
+
+# Create 2 education levels
+file_data$high_education_level <- L4Quals_plus
+file_data$low_education_level <- NoQuals
+
+detach(file_data)
+
+# Next steps
+# Remove all other data - see Brexit session 2 R code (Thursday session).
